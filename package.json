@@ -1,0 +1,15 @@
+{
+	"name": "auto-negotiate",
+	"version": "2.2.0",
+	"description": "Automatically accepts or declines Trade Broker negotiations.",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/pinkipi/auto-negotiate.git"
+	},
+	"author": "Pinkie Pie",
+	"license": "GPL-3.0",
+	"bugs": {
+		"url": "https://github.com/pinkipi/auto-negotiate/issues"
+	},
+	"homepage": "https://github.com/pinkipi/auto-negotiate#readme"
+}
