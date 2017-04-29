@@ -44,7 +44,7 @@ module.exports = function AutoNegotiate(dispatch) {
 	dispatch.hook('S_TRADE_BROKER_DEAL_INFO_UPDATE', 1, event => {
 		if(currentDeal) {
 			if(event.buyerStage == 2 && event.sellerStage < 2)
-				if(event.price.toNumber() >= currentDeal.sellerPrice.toNumber()) {
+				if(event.price.toNumber() >= currentDeal.offeredPrice.toNumber()) {
 					let deal = currentDeal
 
 					// This abandoned timeout is not a good design, but it's unlikely that it will cause any issues
