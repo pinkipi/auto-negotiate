@@ -13,6 +13,7 @@ const sysmsg = require('tera-data-parser').sysmsg
 
 module.exports = function AutoNegotiate(dispatch) {
 	let pendingDeals = [],
+		deferredDeals = {},
 		currentDeal = null,
 		currentContract = null,
 		actionTimeout = null,
@@ -29,6 +30,37 @@ module.exports = function AutoNegotiate(dispatch) {
 		if(comparePrice(event.offeredPrice, event.sellerPrice) != 0) {
 			pendingDeals.push(event)
 			queueNextDeal(true)
+			return false
+		} else {
+			// timestamp to make each offer unique, make sure it fits uint32
+			const uts = Date.now() % 1000000
+			deferredDeals[uts] = Object.assign({}, event)
+
+			// garbage collection
+			setTimeout(() => delete deferredDeals[uts], 30000)
+
+			event.listing = uts
+			return true
+		}
+	})
+
+	
+	// deferred deals that were later accepted by user
+	dispatch.hook('C_REQUEST_CONTRACT', 1, event => {
+		if (event.type !== 35) return
+
+		const listing = event.data.readInt32LE(4)
+		const deal = deferredDeals[listing]
+		delete deferredDeals[listing]
+
+		if (deal) {
+			// allow the deal to pass comparePrice checks at accepted price
+			deal.sellerPrice = deal.offeredPrice
+			pendingDeals.push(deal)
+			queueNextDeal(true)
+
+			// reply to client -- otherwise it will get stuck and not accept/interact other contracts
+			dispatch.toClient('S_REPLY_REQUEST_CONTRACT', 1, { type: event.type })
 			return false
 		}
 	})
