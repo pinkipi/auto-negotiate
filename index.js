@@ -1,10 +1,14 @@
-const AUTO_ACCEPT_THRESHOLD	= 1,			// Automatically accepts offers for *equal or more than* the specified amount (0 to disable).
-	AUTO_REJECT_THRESHOLD	= 0.75,			/*	Automatically declines offers for *less* than the specified amount (or AUTO_ACCEPT_THRESHOLD).
-												Example: 0.75 will decline offers for less than 75% of the asking price (0 to disable).
-											*/
-	DELAY_ACTIONS 			= true,			// Simulate human-like response times.
-	ACTION_DELAY_LONG_MS	= [1200, 2600],	// [Min, Max]
-	ACTION_DELAY_SHORT_MS	= [400, 800]	// [Min, Max]
+const AUTO_ACCEPT_THRESHOLD		= 1,			// Automatically accepts offers for *equal or more than* the specified amount (0 to disable).
+	AUTO_REJECT_THRESHOLD		= 0.75,			/*	Automatically declines offers for *less* than the specified amount (or AUTO_ACCEPT_THRESHOLD).
+													Example: 0.75 will decline offers for less than 75% of the asking price (0 to disable).
+												*/
+	UNATTENDED_MANUAL_NEGOTIATE	= false,		/* Allows the user to click the Accept button once, and the negotiation will be handled automatically.
+													Warning: Use this at your own risk. Recommended to set Bargain to a seperate chat tab to prevent
+													clicking accidentally.
+												*/
+	DELAY_ACTIONS 				= true,			// Simulate human-like response times.
+	ACTION_DELAY_LONG_MS		= [1200, 2600],	// [Min, Max]
+	ACTION_DELAY_SHORT_MS		= [400, 800]	// [Min, Max]
 
 const TYPE_NEGOTIATION_PENDING = 35,
 	TYPE_NEGOTIATION = 36
@@ -12,7 +16,8 @@ const TYPE_NEGOTIATION_PENDING = 35,
 const sysmsg = require('tera-data-parser').sysmsg
 
 module.exports = function AutoNegotiate(dispatch) {
-	let pendingDeals = [],
+	let recentDeals = UNATTENDED_MANUAL_NEGOTIATE ? {} : null,
+		pendingDeals = [],
 		currentDeal = null,
 		currentContract = null,
 		actionTimeout = null,
@@ -31,6 +36,14 @@ module.exports = function AutoNegotiate(dispatch) {
 			queueNextDeal(true)
 			return false
 		}
+		else if(UNATTENDED_MANUAL_NEGOTIATE) {
+			let dealId = event.playerId + '-' + event.listing
+
+			if(recentDeals[dealId]) clearTimeout(recentDeals[dealId].timeout)
+
+			recentDeals[dealId] = event
+			recentDeals[dealId].timeout = setTimeout(() => { delete recentDeals[dealId] }, 30000)
+		}
 	})
 
 	dispatch.hook('S_TRADE_BROKER_REQUEST_DEAL_RESULT', 1, event => {
@@ -48,7 +61,7 @@ module.exports = function AutoNegotiate(dispatch) {
 
 				// This abandoned timeout is not a good design, but it's unlikely that it will cause any issues
 				setTimeout(() => {
-					if(deal.playerId == currentDeal.playerId && deal.listing == currentDeal.listing && comparePrice(event.price, currentDeal.sellerPrice) == 1) {
+					if(deal.playerId == currentDeal.playerId && deal.listing == currentDeal.listing && event.price.toNumber() >= currentDeal.offeredPrice.toNumber()) {
 						dispatch.toServer('C_TRADE_BROKER_DEAL_CONFIRM', 1, {
 							listing: currentDeal.listing,
 							stage: event.sellerStage + 1
@@ -102,6 +115,18 @@ module.exports = function AutoNegotiate(dispatch) {
 			}
 		}
 	})
+
+	if(UNATTENDED_MANUAL_NEGOTIATE)
+		dispatch.hook('C_REQUEST_CONTRACT', 1, event => {
+			if(event.type == 35) {
+				let deal = recentDeals[event.data.readUInt32LE(0) + '-' + event.data.readUInt32LE(4)]
+
+				if(deal) {
+					currentDeal = deal
+					message('Handling negotiation with ' + currentDeal.name + '...')
+				}
+			}
+		})
 
 	function replyOrAccept(event) {
 		if(currentDeal && event.type == TYPE_NEGOTIATION_PENDING) {
