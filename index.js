@@ -43,21 +43,20 @@ module.exports = function AutoNegotiate(dispatch) {
 
 	dispatch.hook('S_TRADE_BROKER_DEAL_INFO_UPDATE', 1, event => {
 		if(currentDeal) {
-			if(event.buyerStage == 2 && event.sellerStage < 2)
-				if(event.price.toNumber() >= currentDeal.sellerPrice.toNumber()) {
-					let deal = currentDeal
+			if(event.buyerStage == 2 && event.sellerStage < 2) {
+				let deal = currentDeal
 
-					// This abandoned timeout is not a good design, but it's unlikely that it will cause any issues
-					setTimeout(() => {
-						if(deal.playerId == currentDeal.playerId && deal.listing == currentDeal.listing)
-							dispatch.toServer('C_TRADE_BROKER_DEAL_CONFIRM', 1, {
-								listing: currentDeal.listing,
-								stage: event.sellerStage + 1
-							})
-					}, event.sellerStage == 0 ? rng(ACTION_DELAY_SHORT_MS) : 0)
-				}
-				else
-					endDeal() // We accepted the wrong one, whoops! - TODO: Inspect sRequestContract.data for price and other info
+				// This abandoned timeout is not a good design, but it's unlikely that it will cause any issues
+				setTimeout(() => {
+					if(deal.playerId == currentDeal.playerId && deal.listing == currentDeal.listing && comparePrice(event.price, currentDeal.sellerPrice) == 1) {
+						dispatch.toServer('C_TRADE_BROKER_DEAL_CONFIRM', 1, {
+							listing: currentDeal.listing,
+							stage: event.sellerStage + 1
+						})
+					}
+					else endDeal() // We negotiated the wrong one, whoops! - TODO: Inspect sRequestContract.data for price and other info
+				}, event.sellerStage == 0 ? rng(ACTION_DELAY_SHORT_MS) : 0)
+			}
 
 			return false
 		}
