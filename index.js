@@ -124,6 +124,7 @@ module.exports = function AutoNegotiate(dispatch) {
 				if(deal) {
 					currentDeal = deal
 					message('Handling negotiation with ' + currentDeal.name + '...')
+					setTimeout(() => dispatch.toClient('S_REPLY_REQUEST_CONTRACT', 1, { type: event.type }), 1)
 				}
 			}
 		})
