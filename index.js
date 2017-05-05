@@ -61,7 +61,7 @@ module.exports = function AutoNegotiate(dispatch) {
 
 				// This abandoned timeout is not a good design, but it's unlikely that it will cause any issues
 				setTimeout(() => {
-					if(deal.playerId == currentDeal.playerId && deal.listing == currentDeal.listing && event.price.toNumber() >= currentDeal.offeredPrice.toNumber()) {
+					if(currentDeal && deal.playerId == currentDeal.playerId && deal.listing == currentDeal.listing && event.price.toNumber() >= currentDeal.offeredPrice.toNumber()) {
 						dispatch.toServer('C_TRADE_BROKER_DEAL_CONFIRM', 1, {
 							listing: currentDeal.listing,
 							stage: event.sellerStage + 1
@@ -124,7 +124,6 @@ module.exports = function AutoNegotiate(dispatch) {
 				if(deal) {
 					currentDeal = deal
 					message('Handling negotiation with ' + currentDeal.name + '...')
-					setTimeout(() => dispatch.toClient('S_REPLY_REQUEST_CONTRACT', 1, { type: event.type }), 1)
 				}
 			}
 		})
