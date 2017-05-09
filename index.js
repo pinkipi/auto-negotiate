@@ -16,7 +16,7 @@ const TYPE_NEGOTIATION_PENDING = 35,
 const sysmsg = require('tera-data-parser').sysmsg
 
 module.exports = function AutoNegotiate(dispatch) {
-	const sysmsgMap = sysmsg.maps.get(dispatch.base.protocolMap)
+	const sysmsgMap = sysmsg.maps.get(dispatch.base.protocolVersion)
 
 	let recentDeals = UNATTENDED_MANUAL_NEGOTIATE ? {} : null,
 		pendingDeals = [],
