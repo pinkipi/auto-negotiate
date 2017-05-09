@@ -16,8 +16,6 @@ const TYPE_NEGOTIATION_PENDING = 35,
 const sysmsg = require('tera-data-parser').sysmsg
 
 module.exports = function AutoNegotiate(dispatch) {
-	const sysmsgMap = sysmsg.maps.get(dispatch.base.protocolVersion)
-
 	let recentDeals = UNATTENDED_MANUAL_NEGOTIATE ? {} : null,
 		pendingDeals = [],
 		currentDeal = null,
@@ -108,7 +106,7 @@ module.exports = function AutoNegotiate(dispatch) {
 	dispatch.hook('S_SYSTEM_MESSAGE', 1, event => {
 		if(currentDeal) {
 			let msg = event.message.split('\x0b'),
-				type = msg[0].startsWith('@') ? sysmsgMap.code.get(msg[0].slice(1)) : ''
+				type = msg[0].startsWith('@') ? sysmsg.maps.get(dispatch.base.protocolVersion).code.get(msg[0].slice(1)) : ''
 
 			//if(type == 'SMT_MEDIATE_DISCONNECT_CANCEL_OFFER_BY_ME' || type == 'SMT_MEDIATE_TRADE_CANCEL_ME') return false
 			if(type == 'SMT_MEDIATE_TRADE_CANCEL_OPPONENT') {
