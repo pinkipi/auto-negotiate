@@ -13,9 +13,12 @@ const AUTO_ACCEPT_THRESHOLD		= 1,			// Automatically accepts offers for *equal o
 const TYPE_NEGOTIATION_PENDING = 35,
 	TYPE_NEGOTIATION = 36
 
-const sysmsg = require('tera-data-parser').sysmsg
+const sysmsg = require('tera-data-parser').sysmsg,
+	Command = require('command')
 
 module.exports = function AutoNegotiate(dispatch) {
+	const command = Command(dispatch)
+
 	let recentDeals = UNATTENDED_MANUAL_NEGOTIATE ? {} : null,
 		pendingDeals = [],
 		currentDeal = null,
@@ -88,7 +91,7 @@ module.exports = function AutoNegotiate(dispatch) {
 
 	dispatch.hook('S_REJECT_CONTRACT', 1, event => {
 		if(currentDeal && (event.type == TYPE_NEGOTIATION_PENDING || event.type == TYPE_NEGOTIATION)) {
-			message(currentDeal.name + ' aborted negotiation.')
+			command.message(currentDeal.name + ' aborted negotiation.')
 			currentContract = null
 			endDeal()
 			return false
@@ -110,7 +113,7 @@ module.exports = function AutoNegotiate(dispatch) {
 
 			//if(type == 'SMT_MEDIATE_DISCONNECT_CANCEL_OFFER_BY_ME' || type == 'SMT_MEDIATE_TRADE_CANCEL_ME') return false
 			if(type == 'SMT_MEDIATE_TRADE_CANCEL_OPPONENT') {
-				message(currentDeal.name + ' cancelled negotiation.')
+				command.message(currentDeal.name + ' cancelled negotiation.')
 				return false
 			}
 		}
@@ -123,7 +126,7 @@ module.exports = function AutoNegotiate(dispatch) {
 
 				if(deal) {
 					currentDeal = deal
-					message('Handling negotiation with ' + currentDeal.name + '...')
+					command.message('Handling negotiation with ' + currentDeal.name + '...')
 					process.nextTick(() => {
 						dispatch.toClient('S_REPLY_REQUEST_CONTRACT', 1, { type: event.type })
 					})
@@ -156,8 +159,8 @@ module.exports = function AutoNegotiate(dispatch) {
 		if(!(currentDeal = pendingDeals.shift())) return
 
 		if(comparePrice(currentDeal.offeredPrice, currentDeal.sellerPrice) == 1) {
-			message('Attempting to negotiate with ' + currentDeal.name + '...')
-			message('Price: ' + formatGold(currentDeal.sellerPrice) + ' - Offered: ' + formatGold(currentDeal.offeredPrice))
+			command.message('Attempting to negotiate with ' + currentDeal.name + '...')
+			command.message('Price: ' + formatGold(currentDeal.sellerPrice) + ' - Offered: ' + formatGold(currentDeal.offeredPrice))
 
 			const data = Buffer.alloc(30)
 			data.writeUInt32LE(currentDeal.playerId, 0)
@@ -178,8 +181,8 @@ module.exports = function AutoNegotiate(dispatch) {
 				listing: currentDeal.listing
 			})
 
-			message('Declined negotiation from ' + currentDeal.name + '.')
-			message('Price: ' + formatGold(currentDeal.sellerPrice) + ' - Offered: ' + formatGold(currentDeal.offeredPrice))
+			command.message('Declined negotiation from ' + currentDeal.name + '.')
+			command.message('Price: ' + formatGold(currentDeal.sellerPrice) + ' - Offered: ' + formatGold(currentDeal.offeredPrice))
 
 			currentDeal = null
 			queueNextDeal()
@@ -195,7 +198,7 @@ module.exports = function AutoNegotiate(dispatch) {
 		clearTimeout(cancelTimeout)
 
 		if(currentContract) {
-			message('Negotiation timed out.')
+			command.message('Negotiation timed out.')
 
 			dispatch.toServer('C_CANCEL_CONTRACT', 1, {
 				type: currentContract.type,
@@ -219,18 +222,6 @@ module.exports = function AutoNegotiate(dispatch) {
 		str += '<font color="#c87551">' + gold.slice(-2) + 'c</font>'
 
 		return str
-	}
-
-	function message(msg) {
-		dispatch.toClient('S_CHAT', 1, {
-			channel: 24,
-			authorID: 0,
-			unk1: 0,
-			gm: 0,
-			unk2: 0,
-			authorName: '',
-			message: '(Proxy)' + msg
-		})
 	}
 
 	function rng([min, max]) {
