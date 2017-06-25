@@ -143,8 +143,8 @@ module.exports = function AutoNegotiate(dispatch) {
 
 	// 1 = Auto Accept, 0 = No Action, -1 = Auto-decline
 	function comparePrice(offer, seller) {
-		if(offer.toNumber() >= seller.toNumber() * AUTO_ACCEPT_THRESHOLD) return 1
-		if(offer.toNumber() < seller.toNumber() * AUTO_REJECT_THRESHOLD) return -1
+		if(AUTO_ACCEPT_THRESHOLD && offer.toNumber() >= seller.toNumber() * AUTO_ACCEPT_THRESHOLD) return 1
+		if(AUTO_REJECT_THRESHOLD && offer.toNumber() < seller.toNumber() * AUTO_REJECT_THRESHOLD) return -1
 		return 0
 	}
 
