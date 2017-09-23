@@ -70,7 +70,7 @@ module.exports = function AutoNegotiate(dispatch) {
 							stage: event.sellerStage + 1
 						})
 					}
-					else endDeal() // We negotiated the wrong one, whoops! - TODO: Inspect sRequestContract.data for price and other info
+					else endDeal() // We negotiated the wrong one, whoops! - TODO: Inspect S_REQUEST_CONTRACT.data for price and other info
 				}, event.sellerStage == 0 ? rng(ACTION_DELAY_SHORT_MS) : 0)
 			}
 
@@ -92,6 +92,14 @@ module.exports = function AutoNegotiate(dispatch) {
 	dispatch.hook('S_REJECT_CONTRACT', 1, event => {
 		if(currentDeal && (event.type == TYPE_NEGOTIATION_PENDING || event.type == TYPE_NEGOTIATION)) {
 			command.message(currentDeal.name + ' aborted negotiation.')
+
+			// Fix listing becoming un-negotiable (server-side) if the other user aborts the initial dialog
+			if(event.type == TYPE_NEGOTIATION_PENDING)
+				dispatch.toServer('C_TRADE_BROKER_REJECT_SUGGEST', 1, {
+					playerId: currentDeal.playerId,
+					listing: currentDeal.listing
+				})
+
 			currentContract = null
 			endDeal()
 			return false
