@@ -225,9 +225,9 @@ module.exports = function AutoNegotiate(dispatch) {
 		gold = gold.toString()
 
 		let str = ''
-		if(gold.length > 4) str += '<font color="#ffb033">' + Number(gold.slice(0, -4)).toLocaleString() + 'g</font>'
-		if(gold.length > 2) str += '<font color="#d7d7d7">' + gold.slice(-4, -2) + 's</font>'
-		str += '<font color="#c87551">' + gold.slice(-2) + 'c</font>'
+		if(gold.length > 4) str += '<font color="#ffb033">' + Number(gold.slice(0, -4)).toLocaleString() + '</font><img src="Gold_smalltoken" vspace="-4"/>'
+		if(gold.length > 2) str += '<font color="#d7d7d7">' + gold.slice(-4, -2) + '</font><img src="Silver_smalltoken" vspace="-4"/>'
+		str += '<font color="#c87551">' + gold.slice(-2) + '</font><img src="Copper_smalltoken" vspace="-4"/>'
 
 		return str
 	}
