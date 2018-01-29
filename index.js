@@ -117,7 +117,7 @@ module.exports = function AutoNegotiate(dispatch) {
 	dispatch.hook('S_SYSTEM_MESSAGE', 1, event => {
 		if(currentDeal) {
 			let msg = event.message.split('\x0b'),
-				type = msg[0].startsWith('@') ? sysmsg.maps.get(dispatch.base.protocolVersion).code.get(msg[0].slice(1)) : ''
+				type = msg[0].startsWith('@') ? sysmsg.maps.get(dispatch.base.protocolVersion).code.get(Number(msg[0].slice(1))) : ''
 
 			//if(type == 'SMT_MEDIATE_DISCONNECT_CANCEL_OFFER_BY_ME' || type == 'SMT_MEDIATE_TRADE_CANCEL_ME') return false
 			if(type == 'SMT_MEDIATE_TRADE_CANCEL_OPPONENT') {
