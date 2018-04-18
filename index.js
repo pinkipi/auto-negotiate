@@ -13,8 +13,7 @@ const AUTO_ACCEPT_THRESHOLD		= 1,			// Automatically accepts offers for *equal o
 const TYPE_NEGOTIATION_PENDING = 35,
 	TYPE_NEGOTIATION = 36
 
-const sysmsg = require('tera-data-parser').sysmsg,
-	Command = require('command')
+const Command = require('command')
 
 module.exports = function AutoNegotiate(dispatch) {
 	const command = Command(dispatch)
@@ -116,14 +115,16 @@ module.exports = function AutoNegotiate(dispatch) {
 
 	dispatch.hook('S_SYSTEM_MESSAGE', 1, event => {
 		if(currentDeal) {
-			let msg = event.message.split('\x0b'),
-				type = msg[0].startsWith('@') ? sysmsg.maps.get(dispatch.base.protocolVersion).code.get(Number(msg[0].slice(1))) : ''
+			try {
+				const msg = dispatch.parseSystemMessage(event)
 
-			//if(type == 'SMT_MEDIATE_DISCONNECT_CANCEL_OFFER_BY_ME' || type == 'SMT_MEDIATE_TRADE_CANCEL_ME') return false
-			if(type == 'SMT_MEDIATE_TRADE_CANCEL_OPPONENT') {
-				command.message(currentDeal.name + ' cancelled negotiation.')
-				return false
+				//if(msg.id === 'SMT_MEDIATE_DISCONNECT_CANCEL_OFFER_BY_ME' || msg.id === 'SMT_MEDIATE_TRADE_CANCEL_ME') return false
+				if(msg.id === 'SMT_MEDIATE_TRADE_CANCEL_OPPONENT') {
+					command.message(currentDeal.name + ' cancelled negotiation.')
+					return false
+				}
 			}
+			catch(e) {}
 		}
 	})
 
