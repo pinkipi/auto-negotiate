@@ -51,7 +51,8 @@ module.exports = function AutoNegotiate(dispatch) {
 	dispatch.hook('S_TRADE_BROKER_REQUEST_DEAL_RESULT', 1, event => {
 		if(currentDeal) {
 			if(!event.ok) endDeal()
-
+			else {command.message('Deal successful')}
+			
 			return false
 		}
 	})
