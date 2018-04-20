@@ -116,7 +116,7 @@ module.exports = function AutoNegotiate(dispatch) {
 	dispatch.hook('S_SYSTEM_MESSAGE', 1, event => {
 		if(currentDeal) {
 			try {
-				const msg = dispatch.parseSystemMessage(event)
+				const msg = dispatch.parseSystemMessage(event.message)
 
 				//if(msg.id === 'SMT_MEDIATE_DISCONNECT_CANCEL_OFFER_BY_ME' || msg.id === 'SMT_MEDIATE_TRADE_CANCEL_ME') return false
 				if(msg.id === 'SMT_MEDIATE_TRADE_CANCEL_OPPONENT') {

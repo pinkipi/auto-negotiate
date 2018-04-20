@@ -1,6 +1,6 @@
 {
 	"name": "auto-negotiate",
-	"version": "2.5.3",
+	"version": "2.5.4",
 	"description": "Automatically accepts or declines Trade Broker negotiations.",
 	"repository": {
 		"type": "git",
