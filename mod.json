@@ -1,0 +1,7 @@
+{
+	"name": "auto-negotiate",
+	"update": "github:tera-mods/auto-negotiate",
+	"title": "Auto-Negotiate",
+	"author": "Pinkie Pie",
+	"description": "Automatically accepts or declines Trade Broker negotiations."
+}
