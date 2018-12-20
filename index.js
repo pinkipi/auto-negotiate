@@ -1,22 +1,24 @@
-const AUTO_ACCEPT_THRESHOLD		= 1,			// Automatically accepts offers for *equal or more than* the specified amount (0 to disable).
-	AUTO_REJECT_THRESHOLD		= 0.75,			/*	Automatically declines offers for *less* than the specified amount (or AUTO_ACCEPT_THRESHOLD).
-													Example: 0.75 will decline offers for less than 75% of the asking price (0 to disable).
-												*/
-	UNATTENDED_MANUAL_NEGOTIATE	= false,		/* Allows the user to click the Accept button once, and the negotiation will be handled automatically.
-													Warning: Use this at your own risk. Recommended to set Bargain to a seperate chat tab to prevent
-													clicking accidentally.
-												*/
-	DELAY_ACTIONS 				= true,			// Simulate human-like response times.
-	ACTION_DELAY_LONG_MS		= [1200, 2600],	// [Min, Max]
-	ACTION_DELAY_SHORT_MS		= [400, 800]	// [Min, Max]
-
 const TYPE_NEGOTIATION_PENDING = 35,
 	TYPE_NEGOTIATION = 36
 
 module.exports = function AutoNegotiate(mod) {
+	mod.settings.$init({
+		version: 1,
+		defaults: {
+			acceptThreshold: 1,
+			rejectThreshold: 0.75,
+			unattendManualNegotiate: false,
+			delayActions: {
+				enable: true,
+				longRng: [1200, 2600],
+				shortRng: [400, 800]
+			}
+		}
+	})
+
 	const {command} = mod.require
 
-	let recentDeals = UNATTENDED_MANUAL_NEGOTIATE ? {} : null,
+	let recentDeals = mod.settings.unattendManualNegotiate ? {} : null,
 		pendingDeals = [],
 		currentDeal = null,
 		currentContract = null,
@@ -36,7 +38,7 @@ module.exports = function AutoNegotiate(mod) {
 			queueNextDeal(true)
 			return false
 		}
-		else if(UNATTENDED_MANUAL_NEGOTIATE) {
+		else if(mod.settings.unattendManualNegotiate) {
 			let dealId = event.playerId + '-' + event.listing
 
 			if(recentDeals[dealId]) clearTimeout(recentDeals[dealId].timeout)
@@ -68,7 +70,7 @@ module.exports = function AutoNegotiate(mod) {
 						})
 					}
 					else endDeal() // We negotiated the wrong one, whoops! - TODO: Inspect S_REQUEST_CONTRACT.data for price and other info
-				}, event.sellerStage == 0 ? rng(ACTION_DELAY_SHORT_MS) : 0)
+				}, event.sellerStage == 0 ? rng(mod.settings.delayActions.shortRng) : 0)
 			}
 
 			return false
@@ -126,7 +128,7 @@ module.exports = function AutoNegotiate(mod) {
 		}
 	})
 
-	if(UNATTENDED_MANUAL_NEGOTIATE)
+	if(mod.settings.unattendManualNegotiate)
 		mod.hook('C_REQUEST_CONTRACT', 1, event => {
 			if(event.type == 35) {
 				let deal = recentDeals[event.data.readUInt32LE(0) + '-' + event.data.readUInt32LE(4)]
@@ -150,14 +152,14 @@ module.exports = function AutoNegotiate(mod) {
 
 	// 1 = Auto Accept, 0 = No Action, -1 = Auto-decline
 	function comparePrice(offer, seller) {
-		if(AUTO_ACCEPT_THRESHOLD && Number(offer) >= Number(seller) * AUTO_ACCEPT_THRESHOLD) return 1
-		if(AUTO_REJECT_THRESHOLD && Number(offer) < Number(seller) * AUTO_REJECT_THRESHOLD) return -1
+		if(mod.settings.acceptThreshold && Number(offer) >= Number(seller) * mod.settings.acceptThreshold) return 1
+		if(mod.settings.rejectThreshold && Number(offer) < Number(seller) * mod.settings.rejectThreshold) return -1
 		return 0
 	}
 
 	function queueNextDeal(slow) {
 		if(!actionTimeout && !currentDeal)
-			actionTimeout = setTimeout(tryNextDeal, DELAY_ACTIONS ? rng(slow ? ACTION_DELAY_LONG_MS : ACTION_DELAY_SHORT_MS) : 0)
+			actionTimeout = setTimeout(tryNextDeal, rng(slow ? mod.settings.delayActions.longRng : mod.settings.delayActions.shortRng))
 	}
 
 	function tryNextDeal() {
@@ -232,6 +234,6 @@ module.exports = function AutoNegotiate(mod) {
 	}
 
 	function rng([min, max]) {
-		return min + Math.floor(Math.random() * (max - min + 1))
+		return mod.settings.delayActions.enable ? min + Math.floor(Math.random() * (max - min + 1)) : 0
 	}
 }
