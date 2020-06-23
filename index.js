@@ -236,21 +236,21 @@ module.exports = function AutoNegotiate(mod) {
 		if(!(currentDeal = pendingDeals.shift())) return
 
 		if(comparePrice(currentDeal.sellerPrice, currentDeal.offeredPrice) === 1) {
+			command.message(`Attempting to negotiate with ${currentDeal.name}...`)
+			command.message(`Price: ${formatGold(currentDeal.sellerPrice)} - Offered: ${formatGold(currentDeal.offeredPrice)}`)
+
 			const param = Buffer.alloc(30)
 			param.writeUInt32LE(currentDeal.playerId, 0)
 			param.writeUInt32LE(currentDeal.listing, 4)
 			mod.send('C_REQUEST_CONTRACT', 2, { type: 35, param })
-
-			command.message('Attempting to negotiate with ' + currentDeal.name + '...')
-			command.message('Price: ' + formatGold(currentDeal.sellerPrice) + ' - Offered: ' + formatGold(currentDeal.offeredPrice))
 		}
 		else {
+			command.message(`Declined negotiation from ${currentDeal.name}.`)
+			command.message(`Price: ${formatGold(currentDeal.sellerPrice)} - Offered: ${formatGold(currentDeal.offeredPrice)}`)
+
 			mod.send('C_TRADE_BROKER_REJECT_SUGGEST', 1, { playerId: currentDeal.playerId, listing: currentDeal.listing })
 			currentDeal = null
 			queueNextDeal(true)
-
-			command.message('Declined negotiation from ' + currentDeal.name + '.')
-			command.message('Price: ' + formatGold(currentDeal.sellerPrice) + ' - Offered: ' + formatGold(currentDeal.offeredPrice))
 		}
 	}
 
