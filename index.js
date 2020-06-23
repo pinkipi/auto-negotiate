@@ -249,6 +249,7 @@ module.exports = function AutoNegotiate(mod) {
 			command.message(`Price: ${formatGold(currentDeal.sellerPrice)} - Offered: ${formatGold(currentDeal.offeredPrice)}`)
 
 			mod.send('C_TRADE_BROKER_REJECT_SUGGEST', 1, { playerId: currentDeal.playerId, listing: currentDeal.listing })
+			lastErrorTimestamp = Date.now()
 			currentDeal = null
 			queueNextDeal(true)
 		}
@@ -287,7 +288,7 @@ module.exports = function AutoNegotiate(mod) {
 			rejectThreshold = mod.settings.rejectThreshold
 
 		if(acceptThreshold > 0 && offeredPrice >= acceptThreshold * sellerPrice) return 1
-		if(rejectThreshold > 0 && offeredPrice <= rejectThreshold * sellerPrice) return -1
+		if(rejectThreshold > 0 && offeredPrice < rejectThreshold * sellerPrice) return -1
 		return 0
 	}
 
