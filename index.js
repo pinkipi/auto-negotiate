@@ -123,6 +123,8 @@ module.exports = function AutoNegotiate(mod) {
 		if(currentDeal) {
 			if(event.buyerStage === 2 && event.sellerStage < 2)
 				actionTimer = mod.setTimeout(() => {
+					actionTimer = null
+
 					if(event.price >= currentDeal.offeredPrice)
 						mod.send('C_TRADE_BROKER_DEAL_CONFIRM', 1, {
 							listing: currentDeal.listing,
@@ -263,6 +265,7 @@ module.exports = function AutoNegotiate(mod) {
 	function endDeal(silent) {
 		mod.clearTimeout(actionTimer)
 		mod.clearTimeout(cancelTimer)
+		actionTimer = null
 
 		if(currentContract) {
 			mod.send('C_CANCEL_CONTRACT', 1, { type: currentContract.type, id: currentContract.id })
